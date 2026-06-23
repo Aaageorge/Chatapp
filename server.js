@@ -21,9 +21,13 @@ const __dirname = dirname(__filename);
 
 const app = express();
 const httpServer = createServer(app);
+
+// إعداد CORS للـ Socket.io ولـ Express
+const allowedOrigin = "https://visionary-shortbread-c6623e.netlify.app";
+
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.CLIENT_URL || '*',
+    origin: allowedOrigin,
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -31,9 +35,10 @@ const io = new Server(httpServer, {
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL || '*',
+  origin: allowedOrigin,
   credentials: true,
 }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(join(__dirname, 'uploads')));
@@ -59,13 +64,11 @@ io.on('connection', (socket) => {
     await setOnlineUser(userId, socket.id);
     console.log(`User ${userId} joined their room`);
     
-    // Broadcast online users
     const onlineUsers = await getOnlineUsers();
     io.emit('online_users', onlineUsers);
   });
 
   socket.on('send_message', (data) => {
-    // Broadcast to recipient's room
     socket.to(data.recipientId).emit('receive_message', data);
   });
 
@@ -83,7 +86,6 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', async () => {
     console.log('User disconnected:', socket.id);
-    // Remove from online users (would need to track userId in socket data)
     const onlineUsers = await getOnlineUsers();
     io.emit('online_users', onlineUsers);
   });
@@ -93,7 +95,6 @@ io.on('connection', (socket) => {
 const initializeServer = async () => {
   try {
     await connectDatabase();
-    // Redis connection is now optional - will fall back to memory storage
     await connectRedis();
     
     const PORT = process.env.PORT || 5000;
@@ -102,7 +103,6 @@ const initializeServer = async () => {
     });
   } catch (error) {
     console.error('Failed to initialize server:', error);
-    // Only exit if database connection fails, Redis is optional
     if (error.message && error.message.includes('database')) {
       process.exit(1);
     }

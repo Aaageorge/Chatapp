@@ -3,24 +3,51 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
-// ... (قم باستيراد باقي الـ routes الخاصة بك هنا)
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+// استيراد الإعدادات والـ Routes
+import { connectDatabase } from './config/database.js';
+import { connectRedis, setOnlineUser, getOnlineUsers } from './config/redis.js';
+import authRoutes from './routes/auth.js';
+import messageRoutes from './routes/messages.js';
+import groupRoutes from './routes/groups.js';
+import mediaRoutes from './routes/media.js';
+import storyRoutes from './routes/stories.js';
+import userRoutes from './routes/users.js';
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 const httpServer = createServer(app);
 const allowedOrigin = "https://visionary-shortbread-c6623e.netlify.app";
 
-// 1. الإعداد الصحيح للـ CORS (يجب أن يكون قبل أي route)
+// 1. إعدادات CORS المتكاملة
 app.use(cors({
-  origin: allowedOrigin,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  origin: function (origin, callback) {
+    if (!origin || origin === allowedOrigin) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
   credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-app.use(express.json());
+// معالجة طلبات الـ Preflight بشكل صريح
+app.options('*', cors());
 
-// 2. إعداد Socket.io
+// 2. Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static(join(__dirname, 'uploads')));
+
+// 3. إعداد Socket.io مع CORS
 const io = new Server(httpServer, {
   cors: {
     origin: allowedOrigin,
@@ -29,10 +56,47 @@ const io = new Server(httpServer, {
   },
 });
 
-// ... (ضع الـ routes هنا: app.use('/api/auth', authRoutes); إلخ)
-
-// 3. الاستماع للمنفذ
-const PORT = process.env.PORT || 8080;
-httpServer.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+// 4. Routes
+app.get('/', (req, res) => {
+  res.json({ message: 'ChatApp Server is running' });
 });
+
+app.use('/api/auth', authRoutes);
+app.use('/api', messageRoutes);
+app.use('/api', groupRoutes);
+app.use('/api/media', mediaRoutes);
+app.use('/api', storyRoutes);
+app.use('/api', userRoutes);
+
+// 5. Socket.io Logic
+io.on('connection', (socket) => {
+  console.log('User connected:', socket.id);
+  socket.on('join', async (userId) => {
+    socket.join(userId);
+    await setOnlineUser(userId, socket.id);
+    io.emit('online_users', await getOnlineUsers());
+  });
+  socket.on('disconnect', async () => {
+    io.emit('online_users', await getOnlineUsers());
+  });
+});
+
+// 6. تشغيل السيرفر
+const PORT = process.env.PORT || 8080;
+const initializeServer = async () => {
+  try {
+    await connectDatabase();
+    // إذا كنت لا تزال تواجه مشكلة مع Redis، ابقِ هذا السطر معلقاً
+    await connectRedis().catch(err => console.log("Redis optional connection failed"));
+    
+    httpServer.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to initialize server:', error);
+  }
+};
+
+initializeServer();
+
+export { io };

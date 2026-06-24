@@ -27,16 +27,10 @@ const allowedOrigin = "https://visionary-shortbread-c6623e.netlify.app/";
 
 // 1. إعدادات CORS المتكاملة
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || origin === allowedOrigin) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-  credentials: true,
-  allowedHeaders: ["Content-Type", "Authorization"]
+  origin: "*", // جرب النجمة مؤقتاً
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["*"], // السماح بكل الترويسات
+  credentials: true
 }));
 
 // معالجة طلبات الـ Preflight بشكل صريح

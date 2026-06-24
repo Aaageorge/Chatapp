@@ -21,7 +21,7 @@ const __dirname = dirname(__filename);
 
 const app = express();
 const httpServer = createServer(app);
-
+const cors = require('cors');
 // الرابط الموثوق لموقعك على Netlify
 const allowedOrigin = "https://visionary-shortbread-c6623e.netlify.app";
 

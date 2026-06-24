@@ -1,7 +1,7 @@
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-
+import cors from 'cors';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -14,38 +14,34 @@ import mediaRoutes from './routes/media.js';
 import storyRoutes from './routes/stories.js';
 import userRoutes from './routes/users.js';
 
+// Load environment variables
 dotenv.config();
 
+// Configuration
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+const allowedOrigin = "https://visionary-shortbread-c6623e.netlify.app";
+const PORT = process.env.PORT || 5000;
 
+// Initialize Express app and HTTP server
 const app = express();
 const httpServer = createServer(app);
-const cors = require('cors');
-// الرابط الموثوق لموقعك على Netlify
-const allowedOrigin = "https://visionary-shortbread-c6623e.netlify.app";
 
-app.use(cors({
-  origin: allowedOrigin,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // أضفنا OPTIONS هنا
-  credentials: true,
-}));
-
-// إعداد CORS للـ Socket.io
+// Initialize Socket.io with CORS configuration
 const io = new Server(httpServer, {
   cors: {
-    origin: allowedOrigin,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    origin: [allowedOrigin],
+    methods: ["GET", "POST", "OPTIONS"],
     credentials: true,
   },
 });
 
 // Middleware
 app.use(cors({
-  origin: allowedOrigin,
+  origin: [allowedOrigin],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true,
 }));
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(join(__dirname, 'uploads')));
@@ -98,13 +94,12 @@ io.on('connection', (socket) => {
   });
 });
 
-// Initialize connections
+// Initialize server connections
 const initializeServer = async () => {
   try {
     await connectDatabase();
     await connectRedis();
     
-    const PORT = process.env.PORT || 5000;
     httpServer.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });

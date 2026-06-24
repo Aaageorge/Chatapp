@@ -23,7 +23,7 @@ const __dirname = dirname(__filename);
 
 const app = express();
 const httpServer = createServer(app);
-const allowedOrigin = "https://visionary-shortbread-c6623e.netlify.app";
+const allowedOrigin = "https://visionary-shortbread-c6623e.netlify.app/";
 
 // 1. إعدادات CORS المتكاملة
 app.use(cors({

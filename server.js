@@ -25,6 +25,12 @@ const cors = require('cors');
 // الرابط الموثوق لموقعك على Netlify
 const allowedOrigin = "https://visionary-shortbread-c6623e.netlify.app";
 
+app.use(cors({
+  origin: allowedOrigin,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // أضفنا OPTIONS هنا
+  credentials: true,
+}));
+
 // إعداد CORS للـ Socket.io
 const io = new Server(httpServer, {
   cors: {

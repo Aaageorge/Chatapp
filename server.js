@@ -22,13 +22,14 @@ const __dirname = dirname(__filename);
 const app = express();
 const httpServer = createServer(app);
 
-// إعداد CORS للـ Socket.io ولـ Express
+// الرابط الموثوق لموقعك على Netlify
 const allowedOrigin = "https://visionary-shortbread-c6623e.netlify.app";
 
+// إعداد CORS للـ Socket.io
 const io = new Server(httpServer, {
   cors: {
     origin: allowedOrigin,
-    methods: ['GET', 'POST'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
   },
 });

@@ -23,18 +23,19 @@ const __dirname = dirname(__filename);
 
 const app = express();
 const httpServer = createServer(app);
-const allowedOrigin = "https://visionary-shortbread-c6623e.netlify.app/";
+const allowedOrigin = "https://visionary-shortbread-c6623e.netlify.app";
 
 // 1. إعدادات CORS المتكاملة
-app.use(cors({
-  origin: "*", // جرب النجمة مؤقتاً
+const corsOptions = {
+  origin: allowedOrigin,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["*"], // السماح بكل الترويسات
-  credentials: true
-}));
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+};
 
-// معالجة طلبات الـ Preflight بشكل صريح
-app.options('*', cors());
+// معالجة طلبات الـ Preflight بشكل صريح — يجب أن يكون قبل أي Route
+app.options('*', cors(corsOptions));
+app.use(cors(corsOptions));
 
 // 2. Middleware
 app.use(express.json());

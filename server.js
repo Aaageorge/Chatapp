@@ -23,11 +23,9 @@ const __dirname = dirname(__filename);
 
 const app = express();
 const httpServer = createServer(app);
-const allowedOrigin = "https://visionary-shortbread-c6623e.netlify.app";
-
 // 1. إعدادات CORS المتكاملة
 const corsOptions = {
-  origin: allowedOrigin,
+  origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
@@ -45,7 +43,7 @@ app.use('/uploads', express.static(join(__dirname, 'uploads')));
 // 3. إعداد Socket.io مع CORS
 const io = new Server(httpServer, {
   cors: {
-    origin: allowedOrigin,
+    origin: "*",
     methods: ["GET", "POST"],
     credentials: true,
   },

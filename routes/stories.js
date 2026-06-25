@@ -1,4 +1,5 @@
 import express from 'express'
+import jwt from 'jsonwebtoken'
 import { query } from '../config/database.js'
 import { setCache, getCache, deleteCache } from '../config/redis.js'
 
@@ -13,7 +14,6 @@ const authenticateToken = (req, res, next) => {
   }
 
   try {
-    const jwt = require('jsonwebtoken')
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key')
     req.userId = decoded.userId
     next()
